@@ -9,9 +9,9 @@ Chemrap::Chemrap() {
 
 
 void Chemrap::begin(void) {
-    Serial.println("starting i2c");
-    i2cBus->begin(SCL, SDA);
-    Serial.println("prescale");
+    i2cBus->begin(SDA, SCL);
+    delay(50);
+    writeByteTo(MODE1, 0x80);
     setPrescale(60); // default frequency
 }
 
@@ -24,6 +24,7 @@ void Chemrap::setAngle(int motor, float angle) {
     uint8_t motorReg = SERVO_REG_BASE + 4*motor;
     uint16_t on = SERVO_MIN;
     uint16_t off = angle/180 * (SERVO_MAX-SERVO_MIN) + on;
+    Serial.println(off);
 
     setMotorPwm(motorReg, on, off);
 }
@@ -44,22 +45,34 @@ void Chemrap::setPrescale(float freq) {
 
 void Chemrap::writeByteTo(uint8_t reg, uint8_t val) {
     i2cBus->beginTransmission(ADDRESS);
-    i2cBus->write(ADDRESS);
+    i2cBus->write(reg);
     i2cBus->write(val);
     i2cBus->endTransmission();
 }
 
 void Chemrap::setMotorPwm(uint8_t motorReg, uint16_t on, uint16_t off) {
 
+    uint8_t onHigh = (uint8_t)on;
+    uint8_t onLow = (uint8_t)(on>>8);
+    uint8_t offHigh = (uint8_t)off;
+    uint8_t offLow = (uint8_t)(off>>8);
+
+    // need autoincrement but kjust do it slow for now
     i2cBus->beginTransmission(ADDRESS);
     i2cBus->write(motorReg);
-    i2cBus->write(on);
-    i2cBus->write(motorReg+1);
-    i2cBus->write(on>>8);
-    i2cBus->write(motorReg+2);
-    i2cBus->write(off);
-    i2cBus->write(motorReg+3);
-    i2cBus->write(off>>8);
+    i2cBus->write(onLow);
+    i2cBus->endTransmission();
+    i2cBus->beginTransmission(ADDRESS);
+    i2cBus->write(motorReg+0x01);
+    i2cBus->write(onHigh);
+    i2cBus->endTransmission();
+    i2cBus->beginTransmission(ADDRESS);
+    i2cBus->write(motorReg+0x02);
+    i2cBus->write(offLow);
+    i2cBus->endTransmission();
+    i2cBus->beginTransmission(ADDRESS);
+    i2cBus->write(motorReg+0x03);
+    i2cBus->write(offHigh);
     i2cBus->endTransmission();
 }
 
@@ -71,3 +84,11 @@ uint8_t Chemrap::readByteFrom(uint8_t reg) {
     i2cBus->requestFrom(ADDRESS, 1);
     return i2cBus->read();
 }
+
+void Chemrap::info(void) {
+    Serial.println("----------------------------------");
+    Serial.print("MODE1: ");Serial.println(readByteFrom(MODE1));
+    Serial.print("PRESCALE: ");Serial.println(readByteFrom(PRESCALE));
+    Serial.println("----------------------------------");
+}
+

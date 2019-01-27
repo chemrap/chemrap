@@ -21,6 +21,7 @@ class Chemrap {
         void reset(void);
         void calibrateMotor(int motor);
         void setAngle(int motor, float angle);
+        void info(void);
     private:
         void setPrescale(float freq);
         void setMotorPwm(uint8_t motorReg, uint16_t on, uint16_t off);
