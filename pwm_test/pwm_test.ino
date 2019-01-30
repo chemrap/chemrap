@@ -12,13 +12,13 @@ Chemrap chemrap = Chemrap();
     
 void setup() {
     Serial.begin(115200);
-    // chemrapSetup();
-    servoDriverSetup();
+    chemrapSetup();
+    // servoDriverSetup();
 }
 
 void loop() {
-    // chemrapTest();
-    servoDriverTest();
+    chemrapTest();
+    // servoDriverTest();
 }
 
 
@@ -32,7 +32,7 @@ void servoDriverSetup() {
     writeByte(0x00, sleep);
     writeByte(0xFE, 101);  // 101
     writeByte(0x00, mode1);
-
+    delay(1000);
 }
 
 void servoDriverTest() {
@@ -41,22 +41,32 @@ void servoDriverTest() {
     uint8_t offLow=0x44;
     uint8_t offHigh=0x45;
 
-    // writeByte(onLow, 0x96);
-    // writeByte(onHigh, 0x00);
-    // writeByte(offLow, 0xFF);
-    // writeByte(offHigh, 0x01);
-
-    for (uint16_t low=0x0096; low<=0x02BC; low++) {
-        Serial.println(low);
-        writeByte(onLow, 0x96);
-        writeByte(onHigh, 0x00);
-        writeByte(offLow, low);
-        writeByte(offHigh, low>>8);
+    for (uint16_t low=0x02BC; low>0x0000; --low) {
+        Serial.print("Low");    Serial.print(" ");
+        Serial.print((uint8_t)(low>>8), HEX);    Serial.print(" ");
+        Serial.print((uint8_t)low, HEX);         Serial.print(" ");
+        Serial.print((uint8_t)(0x02BC>>8), HEX); Serial.print(" ");
+        Serial.print((uint8_t)0x02BC, HEX);      Serial.println(" ");
+        writeByte(onHigh,   (uint8_t)(low>>8));
+        writeByte(onLow,    (uint8_t)low);
+        writeByte(offHigh,  (uint8_t)(0x02BC>>8));
+        writeByte(offLow,   (uint8_t)0x02BC);
         delay(50);
     }
 
+    for (uint16_t high=0x001D; high<=0x02BC; high++) {
+        Serial.print("Low");    Serial.print(" ");
+        Serial.print((uint8_t)(0x001D>>8), HEX);    Serial.print(" ");
+        Serial.print((uint8_t)0x001D, HEX);         Serial.print(" ");
+        Serial.print((uint8_t)(high>>8), HEX); Serial.print(" ");
+        Serial.print((uint8_t)high, HEX);      Serial.println(" ");
+        writeByte(onLow,    0x1D);
+        writeByte(onHigh,   0x00);
+        writeByte(offLow,   high);
+        writeByte(offHigh,  high>>8);
+        delay(50);
+    }
 }
-
 
 void chemrapSetup() {
     Serial.begin(SERIAL_BAUD_RATE);
@@ -68,10 +78,13 @@ void chemrapSetup() {
 void chemrapTest() {
     int motor = 15;
 
-    for(int angle=0; angle<=180; angle++) {
-        Serial.print(angle);Serial.print("  ");
-        chemrap.setAngle(motor, angle);
-        delay(250);
+    for(int angle=10; angle<=170; angle++) {
+        Serial.print(angle);Serial.println("  ");
+        chemrap.setAngle(15, angle);
+        chemrap.setAngle(14, angle);
+        chemrap.setAngle(13, angle);
+        chemrap.setAngle(12, angle);
+        delay(100);
     }
 }
 
